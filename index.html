@@ -8,19 +8,26 @@
 </head>
 <body>
     <div class="container">
+        <!-- Left navigation rail for berth links -->
+        <nav class="nav-rail" id="berth-rail">
+            <h2>Berths</h2>
+            <div id="berths-list" class="button-container">
+                <p>Loading available berths...</p>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <h1>Welcome to the Marine Line Tension Monitor</h1>
+            <p>Choose a berth from the left to inspect bollards and hooks.</p>
+        </main>
+
+        <!-- Right-side high tension info -->
         <aside class="sidebar">
             <h2>High Tension Cables</h2>
             <div id="tension-info">
                 <!-- High tension cable information will be populated here -->
             </div>
         </aside>
-        <main class="main-content">
-            <h1>Welcome to the Marine Line Tension Monitor</h1>
-            <div class="button-container">
-                <a href="berth-one.html" class="button">Berth One</a>
-                <a href="berth-two.html" class="button">Berth Two</a>
-            </div>
-        </main>
     </div>
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>

@@ -18,15 +18,23 @@ h1 {
 
 .container {
     display: flex;
+    align-items: flex-start;
 }
 
 .sidebar {
-    width: 250px;
+    /* Right-side fixed rail for high-tension info */
+    flex: 0 0 300px;
+    width: 300px;
     background: #35424a;
     color: #ffffff;
-    padding: 15px;
-    height: 100vh;
+    padding: 20px 16px;
     position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    height: 100vh;
+    overflow: auto;
+    z-index: 5;
 }
 
 .sidebar h2 {
@@ -43,9 +51,67 @@ h1 {
 }
 
 .main-content {
-    margin-left: 270px;
+    /* Leave space for fixed left nav (220px) and right rail (300px) */
+    margin-left: 240px;
+    margin-right: 320px;
+    padding: 24px;
+    flex: 1 1 auto;
+}
+
+/* Navigation rail on the left for berth links */
+.nav-rail {
+    /* Left fixed full-height navbar */
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 220px;
+    background: #ffffff;
+    padding: 20px 12px;
+    border-right: 1px solid #e6e6e6;
+    height: 100vh;
+    overflow: auto;
+    z-index: 10;
+}
+.nav-rail h2 { margin: 0 0 8px 0; font-size: 16px; color: #03314b; }
+
+/* When nav and sidebar are fixed, the flex order is less relevant, but keep reasonable defaults */
+.nav-rail { order: 1; }
+.main-content { order: 2; }
+.sidebar { order: 3; }
+
+/* Pages use `.content` (berth pages). Ensure same spacing so content isn't hidden */
+.content {
+    margin-left: 0;
     padding: 20px;
-    flex-grow: 1;
+    flex: 1 1 auto;
+}
+
+/* Ensure container extends to full viewport */
+.container { min-height: 100vh; }
+
+/* Responsive: collapse sidebar into a top bar on narrow viewports */
+@media (max-width: 700px) {
+    .container {
+        flex-direction: column;
+    }
+    .sidebar {
+        position: relative;
+        width: 100%;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        height: auto;
+    }
+    .sidebar h2 { font-size: 16px; margin: 0; }
+    .main-content, .content {
+        margin-left: 0;
+        margin-right: 0;
+        padding: 12px;
+    }
+    .nav-rail { position: relative; width: 100%; border-right: none; border-bottom: 1px solid #e6e6e6; height: auto; }
 }
 
 .button {
@@ -70,4 +136,45 @@ h1 {
     position: relative;
     bottom: 0;
     width: 100%;
+}
+
+/* Berth tree styles */
+.berth-tree { margin-top: 12px; }
+.bollard { background: #fff; border-radius: 6px; margin-bottom: 8px; padding: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.bollard-header { display:flex; justify-content:space-between; align-items:center; padding:6px; }
+.bollard-header:hover { background:#f6f6f6; }
+.hook-list { padding-left: 12px; margin-top:6px; }
+.hook-list.collapsed { display:none; }
+.hook-item { display:flex; align-items:center; padding:4px 0; }
+.status-dot { width:14px; height:14px; border-radius:50%; display:inline-block; margin-right:8px; border:1px solid rgba(0,0,0,0.08); }
+.status-dot.green { background:#2ecc71; }
+.status-dot.yellow { background:#f0ad4e; }
+.status-dot.red { background:#d9534f; }
+.status-dot.gray { background:#888; }
+.hook-text { font-size:0.95em; }
+
+/* Collapsible behavior (initially expanded) */
+.bollard .hook-list { transition: max-height 0.2s ease; }
+
+/* Summary banner */
+.summary-banner { display:flex; justify-content:space-between; align-items:center; background:#fff7; padding:8px; border-radius:6px; margin-bottom:8px; }
+.summary-banner.has-critical { box-shadow: 0 0 8px rgba(255,0,0,0.25); }
+.summary-banner .crit { color:#d9534f; font-weight:700; margin-right:8px; }
+.summary-banner .att { color:#f0ad4e; margin-right:8px; }
+.summary-banner .norm { color:#2ecc71; }
+
+.berth-summary { margin-bottom:12px; }
+
+.button-container { padding: 8px; }
+.berth-nav { width: 220px; max-height: 72vh; overflow: auto; border-right: 1px solid #e6e6e6; background: #fbfdff; }
+.berth-nav-list { list-style: none; margin: 0; padding: 6px; display: flex; flex-direction: column; gap: 6px; }
+.berth-nav-item { margin: 0; }
+.nav-link { display: block; padding: 8px 12px; color: #03314b; text-decoration: none; border-radius: 4px; border-left: 4px solid transparent; }
+.nav-link:hover { background: #eef8ff; }
+.nav-link:focus, .nav-link.active { background: #dff3ff; border-left-color: #0b66c3; outline: none; }
+
+@media (max-width: 700px) {
+    .berth-nav { width: 100%; border-right: none; border-bottom: 1px solid #e6e6e6; }
+    .berth-nav-list { flex-direction: row; gap: 8px; padding: 8px; overflow-x: auto; }
+    .nav-link { white-space: nowrap; }
 }

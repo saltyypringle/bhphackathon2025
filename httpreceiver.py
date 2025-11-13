@@ -67,6 +67,9 @@ class MooringHandler(BaseHTTPRequestHandler):
                     "faulted": hook.faulted,
                     "attached_line": hook.attached_line,
                     "history": hook.history,
+                    # status: normal / attention / critical
+                    "status": ("critical" if hook.is_critical() else ("attention" if hook.needs_attention() else "normal")),
+                    "last_timestamp": (hook.history[-1]["timestamp"] if hook.history else None),
                 }
             )
 
