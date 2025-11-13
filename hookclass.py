@@ -33,18 +33,20 @@ class Hook:
             return 0
         return self.current_tension - self.previous_tension
 
-    def needs_attention(self, attention_threshold=80):
+    def needs_attention(self, attention_threshold=50):
         """
-        Returns True if tension exceeds attention threshold % of max tension.
+        Returns True if tension exceeds attention threshold (% of max tension).
+        Default attention threshold changed to 50%% (e.g., 5/10 for max_tension=10).
         """
         pct = self.tension_percent()
         if pct is None:
             return False
         return pct >= attention_threshold
 
-    def is_critical(self, critical_threshold=90):
+    def is_critical(self, critical_threshold=80):
         """
-        Returns True if tension exceeds critical threshold % of max tension.
+        Returns True if tension exceeds critical threshold (% of max tension).
+        Default critical threshold changed to 80%% (e.g., 8/10 for max_tension=10).
         """
         pct = self.tension_percent()
         if pct is None:
@@ -52,9 +54,11 @@ class Hook:
         return pct >= critical_threshold
 
     def __repr__(self):
+        pct = self.tension_percent()
+        pct_str = f"{pct:.1f}%" if pct is not None else "N/A"
         return (
             f"<Hook {self.name}: tension={self.current_tension}, "
-            f"{self.tension_percent():.1f}% of max, "
+            f"{pct_str} of max, "
             f"rate={self.rate_of_change()}, "
             f"faulted={self.faulted}, line={self.attached_line}>"
         )

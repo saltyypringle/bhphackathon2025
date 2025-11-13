@@ -9,8 +9,9 @@ document.addEventListener("DOMContentLoaded", function() {
 // track previous critical count to avoid repeat alerts
 let previousCriticalCount = 0;
 // debounce buffers to avoid rapid status flicker
-const STATUS_BUFFER_THRESHOLD = 3; // number of consecutive polls required
-const statusBuffers = {}; // key -> { last: 'normal'|'attention'|'critical', count: n, stable: '...' }
+// lower threshold to 2 so UI updates faster (about 4s at 2s poll)
+const STATUS_BUFFER_THRESHOLD = 2; // number of consecutive polls required
+const statusBuffers = {};
 
 function fetchHighTensionData() {
     fetch('http://127.0.0.1:8000/hooks')
@@ -72,14 +73,15 @@ function groupByBerth(hooks) {
     return berths;
 }
 
-function tensionColor(tension) {
-    // red = tension 20-25 (max tension)
-    // yellow = tension 13-20
-    // green = tension 0-13
+function tensionColor(tension, maxTension) {
+    // Percent-based coloring using server thresholds:
+    // critical: >=80%; attention: >=50%; else normal
     if (tension === null || tension === undefined || isNaN(Number(tension))) return 'gray';
     const t = Number(tension);
-    if (t >= 20) return 'red';
-    if (t >= 13) return 'yellow';
+    const maxT = (maxTension === undefined || maxTension === null) ? 10 : Number(maxTension);
+    const pct = (maxT > 0) ? (t / maxT) * 100 : 0;
+    if (pct >= 80) return 'red';
+    if (pct >= 50) return 'yellow';
     return 'green';
 }
 
@@ -284,8 +286,21 @@ function renderBerth(container, bollardsObj, berthName) {
         hooks.forEach(h => {
             const hookEl = document.createElement('div');
             hookEl.className = 'hook-item';
-            // prefer server status color, fall back to tension ranges
-            const color = (h.debounced_status || h.status) ? statusColor(h.debounced_status || h.status) : tensionColor(h.tension);
+            // prefer server status color, fall back to percent/tension ranges
+            let color;
+            const st = h.debounced_status || h.status;
+            if (st) {
+                color = statusColor(st);
+            } else if (h.percent !== null && h.percent !== undefined) {
+                const p = Number(h.percent);
+                if (!isNaN(p)) {
+                    color = (p >= 80) ? 'red' : (p >= 50) ? 'yellow' : 'green';
+                } else {
+                    color = tensionColor(h.tension, h.max_tension);
+                }
+            } else {
+                color = tensionColor(h.tension, h.max_tension);
+            }
             const dot = document.createElement('span');
             dot.className = 'status-dot ' + color;
             const txt = document.createElement('span');
@@ -365,8 +380,9 @@ function applyDebounceToHooks(hooks) {
             // fallback: compute from percent if server didn't provide status
             const p = (h.percent === null || h.percent === undefined) ? null : Number(h.percent);
             if (p === null) return 'normal';
-            if (p >= 90) return 'critical';
-            if (p >= 80) return 'attention';
+            // match server thresholds: attention >=50%, critical >=80%
+            if (p >= 80) return 'critical';
+            if (p >= 50) return 'attention';
             return 'normal';
         })();
 
