@@ -1,5 +1,3 @@
-// This file is responsible for fetching data from the high_tension.json file and updating the sidebar with information on high tension cables.
-
 document.addEventListener("DOMContentLoaded", function() {
     fetchHighTensionData();
     // Poll every 2 seconds for updated hook state

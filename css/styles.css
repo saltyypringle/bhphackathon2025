@@ -18,36 +18,146 @@ h1 {
 
 .container {
     display: flex;
-}
-
-.sidebar {
-    width: 250px;
-    background: #35424a;
-    color: #ffffff;
-    padding: 15px;
-    height: 100vh;
-    position: fixed;
-}
-
-.sidebar h2 {
-    font-size: 18px;
-}
-
-.sidebar ul {
-    list-style: none;
-    padding: 0;
-}
-
-.sidebar ul li {
-    margin: 10px 0;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 20px 40px;
+    box-sizing: border-box;
 }
 
 .main-content {
-    margin-left: 270px;
+    margin-left: 0;
     padding: 20px;
     flex-grow: 1;
+    width: 100%;
 }
 
+/* New styles for hero layout to match the mockup */
+.home-label {
+    color: #cfcfcf;
+    font-size: 18px;
+    margin: 18px 0 0 32px;
+    position: absolute;
+}
+
+.hero-panel {
+    background: #071a8f; /* deep blue */
+    color: #ffffff;
+    padding: 36px;
+    border-radius: 2px;
+    min-height: 520px;
+    box-sizing: border-box;
+    margin: 32px 24px;
+}
+
+.hero-title {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 500;
+    margin-bottom: 28px;
+}
+
+/* layout inside hero: tension column | critical | berths */
+.hero-layout {
+    display: flex;
+    gap: 36px;
+    align-items: flex-start;
+}
+
+/* tension column (moved from sidebar) */
+.tension-column {
+    /* now matches .critical styling (orange panel) */
+    background: #ff8a33; /* orange */
+    color: #ffffff;
+    padding: 40px;
+    border-radius: 2px;
+    box-sizing: border-box;
+    min-height: 380px;
+    flex: 0 0 360px; /* fixed column width similar to mockup */
+    overflow-y: auto;
+}
+
+.tension-column h2 {
+    /* match .critical heading */
+    margin: 0 0 18px 0;
+    font-size: 36px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+/* style for individual tension entries (api.js creates elements with class tension-info) */
+.tension-info {
+    border-bottom: none;
+    padding: 8px 0;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #ffffff;
+}
+
+.tension-info h4 {
+    margin: 0 0 6px 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.tension-info p {
+    margin: 2px 0;
+    font-size: 14px;
+    opacity: 0.95;
+}
+
+.tension-info .small {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+/* left big orange critical box */
+.critical {
+    background: #ff8a33; /* orange */
+    color: #ffffff;
+    padding: 40px;
+    border-radius: 2px;
+    flex: 1 1 60%;
+    box-sizing: border-box;
+    min-height: 380px;
+}
+
+.critical h2 {
+    margin: 0 0 18px 0;
+    font-size: 36px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.critical-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* right column with big berth cards */
+.side-berths {
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    align-items: stretch;
+}
+
+.berth-card {
+    display: block;
+    background: #ff8a33;
+    color: #ffffff;
+    padding: 28px 18px;
+    text-align: center;
+    font-size: 48px;
+    text-decoration: none;
+    border: 4px solid rgba(255,255,255,0.75);
+    border-radius: 2px;
+    line-height: 1;
+}
+
+/* keep older button styles but hide in hero UI */
 .button {
     display: inline-block;
     background: #5cb85c;
@@ -70,4 +180,31 @@ h1 {
     position: relative;
     bottom: 0;
     width: 100%;
+}
+
+/* responsive tweaks */
+@media (max-width: 980px) {
+    .hero-layout {
+        flex-direction: column;
+    }
+    .side-berths {
+        width: 100%;
+        order: 3;
+    }
+    .berth-card {
+        font-size: 36px;
+        padding: 20px;
+    }
+    .critical {
+        order: 2;
+    }
+    .tension-column {
+        order: 1;
+        width: 100%;
+        max-height: none;
+    }
+    .home-label {
+        left: 16px;
+        top: 10px;
+    }
 }

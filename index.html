@@ -1,27 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Marine Line Tension Monitor</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
     <div class="container">
-        <aside class="sidebar">
-            <h2>High Tension Cables</h2>
-            <div id="tension-info">
-                <!-- High tension cable information will be populated here -->
-            </div>
-        </aside>
         <main class="main-content">
-            <h1>Welcome to the Marine Line Tension Monitor</h1>
-            <div class="button-container">
+            <div class="hero-panel">
+                <div class="hero-title">Marine Line Tension Monitor</div>
+
+                <div class="hero-layout">
+                    <section class="tension-column">
+                        <h2>High Tension Cables</h2>
+                        <div id="tension-info">
+                        </div>
+                    </section>
+
+                    <aside class="side-berths">
+                        <a class="berth-card" href="berth-one.html">Berth One</a>
+                        <a class="berth-card" href="berth-two.html">Berth Two</a>
+                    </aside>
+                </div>
+            </div>
+
+            <!-- keep existing content / buttons (if any) below hero -->
+            <div class="button-container" style="display:none;">
                 <a href="berth-one.html" class="button">Berth One</a>
                 <a href="berth-two.html" class="button">Berth Two</a>
             </div>
         </main>
     </div>
+
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>
 </body>
