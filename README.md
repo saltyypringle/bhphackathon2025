@@ -7,8 +7,7 @@ The Marine Line Tension Monitor is a web-based application designed to monitor a
 ```
 marine-line-tension-monitor
 ├── index.html          # Main landing page with links to berths
-├── berth-one.html      # Displays data for Berth One
-├── berth-two.html      # Displays data for Berth Two
+├── berth.html          # Dynamic per-berth page (use `?berth=Berth%20Name`)
 ├── css
 │   └── styles.css      # Styles for the website
 ├── js
