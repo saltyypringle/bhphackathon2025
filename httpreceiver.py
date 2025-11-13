@@ -20,16 +20,9 @@ class MooringHandler(BaseHTTPRequestHandler):
             return
 
         records = parse_mooring_payload(payload)
-        # print(f"Received {len(records)} hook records at {datetime.now().isoformat()}")
-        # print("Records:", json.dumps(records, indent=2))
-        # for record in records:
-        #    print(
-        #        f"  - {record['port_name']} / {record['berth_name']} / {record['bollard_name']} / {record['hook_name']}: {record['tension']} tension"
-        #    )
         for record in records:
             monitor.update_from_record(record)
 
-        # Print hooks that need attention
         attention_hooks = monitor.hooks_needing_attention()
         if attention_hooks:
             print(f"\n*** Hooks needing attention at {datetime.now().isoformat()} ***")
@@ -45,6 +38,47 @@ class MooringHandler(BaseHTTPRequestHandler):
                 "utf-8"
             )
         )
+
+    def do_GET(self):
+        """
+        GET /hooks
+        Returns JSON list of current hooks and their state.
+        """
+        if self.path != "/hooks":
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b"Not Found")
+            return
+
+        # Build serializable list of hooks
+        hooks_list = []
+        for key, hook in monitor.hooks.items():
+            hooks_list.append(
+                {
+                    "key": key,
+                    "hook_name": hook.name,
+                    "bollard_name": hook.bollard_name,
+                    "berth_name": hook.berth_name,
+                    "port_name": hook.port_name,
+                    "tension": hook.current_tension,
+                    "max_tension": hook.max_tension,
+                    "percent": None if hook.tension_percent() is None else round(hook.tension_percent(), 1),
+                    "rate": hook.rate_of_change(),
+                    "faulted": hook.faulted,
+                    "attached_line": hook.attached_line,
+                    "history": hook.history,
+                }
+            )
+
+        body = json.dumps({"hooks": hooks_list}).encode("utf-8")
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        # Allow local web pages to fetch this
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
 
 if __name__ == "__main__":
