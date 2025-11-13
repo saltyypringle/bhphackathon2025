@@ -1,1 +1,1 @@
-// This file is intentionally left blank.
+// main.js intentionally left blank (UI enhancements moved or removed)

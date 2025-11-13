@@ -22,18 +22,15 @@ h1 {
 }
 
 .sidebar {
-    /* Right-side fixed rail for high-tension info */
+    /* Right-side rail for high-tension info; becomes fixed on wide screens */
     flex: 0 0 300px;
     width: 300px;
     background: #35424a;
     color: #ffffff;
     padding: 20px 16px;
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    height: 100vh;
-    overflow: auto;
+    position: relative;
+    height: auto;
+    overflow: visible;
     z-index: 5;
 }
 
@@ -60,17 +57,17 @@ h1 {
 
 /* Navigation rail on the left for berth links */
 .nav-rail {
-    /* Left fixed full-height navbar */
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 220px;
+    /* Left nav rail; becomes fixed on wide screens */
+    position: relative;
+    left: auto;
+    top: auto;
+    bottom: auto;
+    width: 100%;
     background: #ffffff;
-    padding: 20px 12px;
+    padding: 12px;
     border-right: 1px solid #e6e6e6;
-    height: 100vh;
-    overflow: auto;
+    height: auto;
+    overflow: visible;
     z-index: 10;
 }
 .nav-rail h2 { margin: 0 0 8px 0; font-size: 16px; color: #03314b; }
@@ -82,8 +79,10 @@ h1 {
 
 /* Pages use `.content` (berth pages). Ensure same spacing so content isn't hidden */
 .content {
-    margin-left: 0;
-    padding: 20px;
+    /* Match main-content spacing so berth pages sit between rails */
+    margin-left: 240px;
+    margin-right: 320px;
+    padding: 16px 20px;
     flex: 1 1 auto;
 }
 
@@ -114,6 +113,53 @@ h1 {
     .nav-rail { position: relative; width: 100%; border-right: none; border-bottom: 1px solid #e6e6e6; height: auto; }
 }
 
+/* Medium screens: ensure rails are in-flow so main content uses full width without overlap */
+@media (max-width: 899px) {
+    body { overflow: auto; }
+    .nav-rail { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 1px solid #e6e6e6; }
+    .sidebar { position: relative; width: 100%; height: auto; right: auto; }
+    .main-content, .content { margin-left: 0; margin-right: 0; padding: 14px; height: auto; overflow: visible; }
+}
+
+/* Desktop behavior: fit layout inside viewport, main-content scrolls internally */
+@media (min-width: 900px) {
+    /* prevent the page itself from scrolling on standard desktop screens */
+    body { overflow: hidden; }
+
+    /* Adjust rail sizes so main content has more horizontal room */
+    .nav-rail { width: 200px; padding: 24px 12px; }
+    .sidebar { width: 300px; padding: 20px; }
+
+    /* Main content fills the remaining viewport width and scrolls internally */
+    .main-content, .content {
+        width: calc(100vw - 200px - 300px);
+        margin-left: 200px;
+        margin-right: 300px;
+        height: 100vh;
+        overflow: auto;
+        padding: 36px;
+        box-sizing: border-box;
+        max-width: none;
+    }
+
+    /* Bigger, denser berth grid on wide screens */
+    .berth-tree { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .bollard { padding: 12px; }
+    .hook-item { padding: 6px 0; font-size: 1rem; }
+    .status-dot { width: 14px; height: 14px; margin-right: 10px; }
+}
+
+.no-rails .main-content,
+.no-rails .content {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100vw !important;
+    padding: 32px !important;
+    box-sizing: border-box;
+    height: 100vh;
+    overflow: auto;
+}
+
 .button {
     display: inline-block;
     background: #5cb85c;
@@ -138,15 +184,14 @@ h1 {
     width: 100%;
 }
 
-/* Berth tree styles */
-.berth-tree { margin-top: 12px; }
-.bollard { background: #fff; border-radius: 6px; margin-bottom: 8px; padding: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-.bollard-header { display:flex; justify-content:space-between; align-items:center; padding:6px; }
+.berth-tree { margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; align-items: start; }
+.bollard { background: #fff; border-radius: 6px; margin: 0; padding: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+.bollard-header { display:flex; justify-content:space-between; align-items:center; padding:6px 4px; }
 .bollard-header:hover { background:#f6f6f6; }
-.hook-list { padding-left: 12px; margin-top:6px; }
+.hook-list { padding-left: 8px; margin-top:6px; }
 .hook-list.collapsed { display:none; }
-.hook-item { display:flex; align-items:center; padding:4px 0; }
-.status-dot { width:14px; height:14px; border-radius:50%; display:inline-block; margin-right:8px; border:1px solid rgba(0,0,0,0.08); }
+.hook-item { display:flex; align-items:center; padding:3px 0; font-size:0.92em; }
+.status-dot { width:12px; height:12px; border-radius:50%; display:inline-block; margin-right:8px; border:1px solid rgba(0,0,0,0.08); }
 .status-dot.green { background:#2ecc71; }
 .status-dot.yellow { background:#f0ad4e; }
 .status-dot.red { background:#d9534f; }
@@ -179,7 +224,6 @@ h1 {
     .nav-link { white-space: nowrap; }
 }
 
-/* Home link on berth pages */
 .home-link {
     display: inline-block;
     margin-bottom: 8px;
