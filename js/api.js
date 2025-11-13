@@ -8,6 +8,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
 // track previous critical count to avoid repeat alerts
 let previousCriticalCount = 0;
+// debounce buffers to avoid rapid status flicker
+const STATUS_BUFFER_THRESHOLD = 3; // number of consecutive polls required
+const statusBuffers = {}; // key -> { last: 'normal'|'attention'|'critical', count: n, stable: '...' }
 
 function fetchHighTensionData() {
     fetch('http://127.0.0.1:8000/hooks')
@@ -19,9 +22,10 @@ function fetchHighTensionData() {
         })
         .then(data => {
             // endpoint returns { hooks: [...] }
-            const hooks = data.hooks || [];
-            updateSidebar(hooks);
-            updateBerthViews(hooks);
+                const hooks = data.hooks || [];
+                const debounced = applyDebounceToHooks(hooks);
+                updateSidebar(debounced);
+                updateBerthViews(debounced);
         })
         .catch(error => {
             console.error('There has been a problem with your fetch operation:', error);
@@ -228,13 +232,14 @@ function renderBerth(container, bollardsObj, berthName) {
     const header = document.createElement('h2');
     header.textContent = berthName;
 
-    // compute summary counts
+    // compute summary counts (use debounced_status when available)
     let critical = 0, attention = 0, normal = 0, total = 0;
     Object.values(bollardsObj).forEach(hooks => {
         hooks.forEach(h => {
             total++;
-            if (h.status === 'critical') critical++;
-            else if (h.status === 'attention') attention++;
+            const st = h.debounced_status || h.status;
+            if (st === 'critical') critical++;
+            else if (st === 'attention') attention++;
             else normal++;
         });
     });
@@ -280,7 +285,7 @@ function renderBerth(container, bollardsObj, berthName) {
             const hookEl = document.createElement('div');
             hookEl.className = 'hook-item';
             // prefer server status color, fall back to tension ranges
-            const color = h.status ? statusColor(h.status) : tensionColor(h.tension);
+            const color = (h.debounced_status || h.status) ? statusColor(h.debounced_status || h.status) : tensionColor(h.tension);
             const dot = document.createElement('span');
             dot.className = 'status-dot ' + color;
             const txt = document.createElement('span');
@@ -347,4 +352,41 @@ function statusColor(status) {
     if (status === 'attention') return 'yellow';
     if (status === 'normal') return 'green';
     return 'gray';
+}
+
+function getHookKey(h) {
+    return `${h.berth_name}::${h.bollard_name}::${h.hook_name}`;
+}
+
+function applyDebounceToHooks(hooks) {
+    // Return a shallow copy of hooks where each hook gets a `debounced_status` property
+    return hooks.map(h => {
+        const observed = h.status || (() => {
+            // fallback: compute from percent if server didn't provide status
+            const p = (h.percent === null || h.percent === undefined) ? null : Number(h.percent);
+            if (p === null) return 'normal';
+            if (p >= 90) return 'critical';
+            if (p >= 80) return 'attention';
+            return 'normal';
+        })();
+
+        const key = getHookKey(h);
+        if (!statusBuffers[key]) {
+            statusBuffers[key] = { last: observed, count: 1, stable: observed };
+        } else {
+            const buf = statusBuffers[key];
+            if (buf.last === observed) {
+                buf.count = Math.min(buf.count + 1, STATUS_BUFFER_THRESHOLD);
+            } else {
+                buf.last = observed;
+                buf.count = 1;
+            }
+            if (buf.count >= STATUS_BUFFER_THRESHOLD && buf.stable !== observed) {
+                buf.stable = observed;
+            }
+        }
+
+        // attach debounced status to a shallow copy so we don't mutate upstream data
+        return Object.assign({}, h, { debounced_status: statusBuffers[key].stable });
+    });
 }
