@@ -2,6 +2,9 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 from parsejson import parse_mooring_payload
 from datetime import datetime
+from hookclass import MooringMonitor, Hook
+
+monitor = MooringMonitor()
 
 
 class MooringHandler(BaseHTTPRequestHandler):
@@ -17,12 +20,22 @@ class MooringHandler(BaseHTTPRequestHandler):
             return
 
         records = parse_mooring_payload(payload)
-        print(f"Received {len(records)} hook records at {datetime.now().isoformat()}")
-        print("Records:", json.dumps(records, indent=2))
+        # print(f"Received {len(records)} hook records at {datetime.now().isoformat()}")
+        # print("Records:", json.dumps(records, indent=2))
+        # for record in records:
+        #    print(
+        #        f"  - {record['port_name']} / {record['berth_name']} / {record['bollard_name']} / {record['hook_name']}: {record['tension']} tension"
+        #    )
         for record in records:
-            print(
-                f"  - {record['port_name']} / {record['berth_name']} / {record['bollard_name']} / {record['hook_name']}: {record['tension']} tension"
-            )
+            monitor.update_from_record(record)
+
+        # Print hooks that need attention
+        attention_hooks = monitor.hooks_needing_attention()
+        if attention_hooks:
+            print(f"\n*** Hooks needing attention at {datetime.now().isoformat()} ***")
+            for hook in attention_hooks:
+                status = "CRITICAL" if hook.is_critical() else "ATTENTION"
+                print(f"{status}: {hook}")
 
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
