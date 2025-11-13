@@ -388,6 +388,7 @@ function applyDebounceToHooks(hooks) {
 
         const key = getHookKey(h);
         if (!statusBuffers[key]) {
+            // initialize buffer for this hook
             statusBuffers[key] = { last: observed, count: 1, stable: observed };
         } else {
             const buf = statusBuffers[key];
@@ -397,8 +398,29 @@ function applyDebounceToHooks(hooks) {
                 buf.last = observed;
                 buf.count = 1;
             }
-            if (buf.count >= STATUS_BUFFER_THRESHOLD && buf.stable !== observed) {
-                buf.stable = observed;
+
+            // If the stable value already equals observed, nothing to do
+            if (buf.stable === observed) {
+                // noop
+            } else {
+                // Only apply buffering when the previous stable color was attention/yellow or critical/red.
+                // If previous stable was 'normal' (green) OR the observed is 'normal', apply immediately.
+                // This makes transitions from green -> yellow/red immediate (so values like 7 show up right away),
+                // while still buffering changes that flip between yellow <-> red to reduce flicker.
+                const prevStable = buf.stable;
+                const obs = observed;
+                const prevWasAlert = (prevStable === 'attention' || prevStable === 'critical');
+                const obsIsAlert = (obs === 'attention' || obs === 'critical');
+
+                if (!prevWasAlert || !obsIsAlert) {
+                    // Either coming from green, or moving to green: apply immediately
+                    buf.stable = observed;
+                } else {
+                    // Both previous and observed are alert states (yellow/red) -> respect buffer
+                    if (buf.count >= STATUS_BUFFER_THRESHOLD) {
+                        buf.stable = observed;
+                    }
+                }
             }
         }
 
