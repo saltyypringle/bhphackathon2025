@@ -62,14 +62,25 @@ class MooringHandler(BaseHTTPRequestHandler):
                     "port_name": hook.port_name,
                     "tension": hook.current_tension,
                     "max_tension": hook.max_tension,
-                    "percent": None if hook.tension_percent() is None else round(hook.tension_percent(), 1),
+                    "percent": (
+                        None
+                        if hook.tension_percent() is None
+                        else round(hook.tension_percent(), 1)
+                    ),
                     "rate": hook.rate_of_change(),
                     "faulted": hook.faulted,
                     "attached_line": hook.attached_line,
                     "history": hook.history,
+                    "high_tension": hook.high_tension,
                     # status: normal / attention / critical
-                    "status": ("critical" if hook.is_critical() else ("attention" if hook.needs_attention() else "normal")),
-                    "last_timestamp": (hook.history[-1]["timestamp"] if hook.history else None),
+                    "status": (
+                        "critical"
+                        if hook.is_critical()
+                        else ("attention" if hook.needs_attention() else "normal")
+                    ),
+                    "last_timestamp": (
+                        hook.history[-1]["timestamp"] if hook.history else None
+                    ),
                 }
             )
 

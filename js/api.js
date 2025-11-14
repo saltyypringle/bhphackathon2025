@@ -1,6 +1,6 @@
 // This file is responsible for fetching data from the high_tension.json file and updating the sidebar with information on high tension cables.
 
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     fetchHighTensionData();
     // poll every 2 seconds for updated hook state
     setInterval(fetchHighTensionData, 2000);
@@ -23,10 +23,10 @@ function fetchHighTensionData() {
         })
         .then(data => {
             // endpoint returns { hooks: [...] }
-                const hooks = data.hooks || [];
-                const debounced = applyDebounceToHooks(hooks);
-                updateSidebar(debounced);
-                updateBerthViews(debounced);
+            const hooks = data.hooks || [];
+            const debounced = applyDebounceToHooks(hooks);
+            updateSidebar(debounced);
+            updateBerthViews(debounced);
         })
         .catch(error => {
             console.error('There has been a problem with your fetch operation:', error);
@@ -47,17 +47,20 @@ function updateSidebar(hooks) {
     hooks.forEach(item => {
         const tensionInfo = document.createElement('div');
         tensionInfo.className = 'tension-info';
-        const percent = item.percent !== null && item.percent !== undefined ? `${item.percent}%` : 'N/A';
-        const lastTs = (item.history && item.history.length) ? item.history[item.history.length - 1].timestamp : '';
-        tensionInfo.innerHTML = `
-            <h4>${item.hook_name} <small>(${item.bollard_name})</small></h4>
-            <p>Port: ${item.port_name} — Berth: ${item.berth_name}</p>
-            <p>Tension: ${item.tension !== null ? item.tension : 'N/A'} / ${item.max_tension} (${percent})</p>
-            <p>Status: ${item.faulted ? 'Faulted' : 'Normal'} ${item.attached_line ? '— ' + item.attached_line : ''}</p>
-            <p>Rate: ${item.rate}</p>
-            ${lastTs ? `<p class="small">Last: ${lastTs}</p>` : ''}
-        `;
-        container.appendChild(tensionInfo);
+        if (item.high_tension > 0) {
+            const percent = item.percent !== null && item.percent !== undefined ? `${item.percent}%` : 'N/A';
+            const lastTs = (item.history && item.history.length) ? item.history[item.history.length - 1].timestamp : '';
+            tensionInfo.innerHTML = `
+                    <h4>${item.hook_name} <small>(${item.bollard_name})</small></h4>
+                    <p>Port: ${item.port_name} — Berth: ${item.berth_name}</p>
+                    <p>Tension: ${item.tension !== null ? item.tension : 'N/A'} / ${item.max_tension} (${percent})</p>
+                    <p>Status: ${item.faulted ? 'Faulted' : 'Normal'} ${item.attached_line ? '— ' + item.attached_line : ''}</p>
+                    <p>Rate: ${item.rate}</p>
+
+                    ${lastTs ? `<p class="small">Last: ${lastTs}</p>` : ''}
+                `;
+            container.appendChild(tensionInfo);
+        }
     });
 }
 
@@ -178,7 +181,7 @@ function renderIndexBerths(container, berths) {
             if (currentQ && decodeURIComponent(currentQ) === bname) {
                 link.classList.add('active');
             }
-        } catch (e) {}
+        } catch (e) { }
         li.appendChild(link);
         ul.appendChild(li);
     });
@@ -354,7 +357,7 @@ function playAlertTone() {
         setTimeout(() => {
             g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.05);
             o.stop(ctx.currentTime + 0.06);
-            try { ctx.close(); } catch (e) {}
+            try { ctx.close(); } catch (e) { }
         }, 120);
     } catch (e) {
         console.warn('Audio alert failed', e);

@@ -14,6 +14,7 @@ class Hook:
         self.previous_tension = None
         self.faulted = False
         self.attached_line = None
+        self.high_tension = 0
 
     def update(self, tension, faulted, attached_line, timestamp=None):
         timestamp = timestamp or datetime.now()
@@ -22,6 +23,11 @@ class Hook:
         self.faulted = faulted
         self.attached_line = attached_line
         self.history.append({"timestamp": timestamp, "tension": tension})
+
+        if self.high_tension > 0:
+            self.high_tension -= 1
+        if tension is not None and tension >= 9:
+            self.high_tension = 5
 
     def tension_percent(self):
         if self.current_tension is None:
