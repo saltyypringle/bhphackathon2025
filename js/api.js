@@ -77,13 +77,7 @@ function groupByBerth(hooks) {
 }
 
 function tensionColor(tension, maxTension) {
-    // Deprecated: replaced by tensionLevelColor which maps absolute tension
-    // levels to colors. Keep for backwards compatibility but route to
-    // the new mapping by estimating an absolute tension if maxTension
-    // is provided. If not, fall back to grey.
     if (tension === null || tension === undefined || isNaN(Number(tension))) return 'gray';
-    // If maxTension provided, we can compute percent mapping via original
-    // behavior; otherwise map directly using absolute levels.
     if (maxTension !== undefined && maxTension !== null && !isNaN(Number(maxTension))) {
         const t = Number(tension);
         const maxT = Number(maxTension) || 10;
@@ -101,7 +95,7 @@ function tensionLevelColor(tension) {
     // 2-4 : green
     // 4-6 : yellow
     // 6-9 : red
-    // N/A  : gray
+    // N/A  : grey
     if (tension === null || tension === undefined || isNaN(Number(tension))) return 'gray';
     const t = Number(tension);
     if (t >= 6 && t < 9) return 'red';
@@ -269,7 +263,25 @@ function renderBerth(container, bollardsObj, berthName) {
     if (!container) return;
     container.innerHTML = '';
     const header = document.createElement('h2');
-    header.textContent = berthName;
+    // If we're on a dedicated berth page the page already has an H1 with the
+    // berth name (id="berth-title"). In that case show the port name here
+    // instead of repeating the berth name. Otherwise show the berth name.
+    const pageTitleEl = document.getElementById('berth-title');
+    const portName = (function extractPortName(bollards) {
+        for (const bollard of Object.keys(bollards)) {
+            const hooks = bollards[bollard] || [];
+            for (const h of hooks) {
+                if (h && h.port_name) return h.port_name;
+            }
+        }
+        return '';
+    })(bollardsObj);
+
+    if (pageTitleEl && pageTitleEl.textContent && pageTitleEl.textContent.trim() === berthName) {
+        header.textContent = portName || berthName;
+    } else {
+        header.textContent = berthName;
+    }
 
     // compute summary counts using the same color logic we render with
     let critical = 0, attention = 0, normal = 0, total = 0;
