@@ -80,11 +80,7 @@ function updateSidebar(hooks) {
         const tensionInfo = document.createElement('div');
         tensionInfo.className = 'tension-info';
         let displayMax = providedMax;
-        if (rawT !== null) {
-            if (displayMax === null || displayMax < rawT) displayMax = 100;
-        } else {
-            if (displayMax === null) displayMax = 100;
-        }
+        if (displayMax === null) displayMax = 100;
         const percent = (rawT !== null && displayMax > 0) ? `${Math.round((rawT / displayMax) * 100)}%` : (item.percent !== null && item.percent !== undefined ? `${item.percent}%` : 'N/A');
         const lastTs = (item.history && item.history.length) ? item.history[item.history.length - 1].timestamp : '';
         tensionInfo.innerHTML = `
@@ -127,8 +123,8 @@ function tensionLevelColor(tension) {
     // N/A                : grey
     if (tension === null || tension === undefined || isNaN(Number(tension))) return 'gray';
     const t = Number(tension);
-    if (t > 55) return 'red';
-    if (t > 25 && t <= 50) return 'yellow';
+    if (t > 40) return 'red';
+    if (t > 25 && t <= 40) return 'yellow';
     if (t >= 5 && t <= 25) return 'green';
     if (t >= 0 && t < 5) return 'yellow';
     return 'gray';
@@ -512,7 +508,7 @@ function getHookColor(h) {
     // Otherwise try percent-based estimate
     if (hasP) {
         const p = Number(h.percent);
-            const maxT = (h.max_tension === undefined || h.max_tension === null || isNaN(Number(h.max_tension))) ? 100 : Number(h.max_tension);
+        const maxT = (h.max_tension === undefined || h.max_tension === null || isNaN(Number(h.max_tension))) ? 100 : Number(h.max_tension);
         if (maxT !== null) {
             const estT = (p / 100) * maxT;
             return tensionLevelColor(estT);
@@ -578,11 +574,15 @@ function renderSummaryChart(hooks) {
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { position: 'bottom' },
-                        tooltip: { callbacks: { label: function(tooltipItem) {
-                            const v = tooltipItem.dataset.data[tooltipItem.dataIndex] || 0;
-                            const pct = ((v / total) * 100).toFixed(1);
-                            return `${tooltipItem.label}: ${v} (${pct}%)`;
-                        } } }
+                        tooltip: {
+                            callbacks: {
+                                label: function (tooltipItem) {
+                                    const v = tooltipItem.dataset.data[tooltipItem.dataIndex] || 0;
+                                    const pct = ((v / total) * 100).toFixed(1);
+                                    return `${tooltipItem.label}: ${v} (${pct}%)`;
+                                }
+                            }
+                        }
                     }
                 }
             });
