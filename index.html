@@ -19,6 +19,10 @@
         <main class="main-content">
             <h1>Welcome to the Marine Line Tension Monitor</h1>
             <p>Choose a berth from the left to inspect bollards and hooks.</p>
+            <div class="chart-card">
+                <h2>Hook Status</h2>
+                <canvas id="status-pie" aria-label="Hook status pie chart" role="img"></canvas>
+            </div>
         </main>
 
         <!-- Right-side high tension info -->
@@ -29,6 +33,7 @@
             </div>
         </aside>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>
 </body>

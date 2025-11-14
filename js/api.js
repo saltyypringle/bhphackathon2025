@@ -27,6 +27,8 @@ function fetchHighTensionData() {
             const debounced = applyDebounceToHooks(hooks);
             updateSidebar(debounced);
             updateBerthViews(debounced);
+            // update summary chart on index page (no-op elsewhere)
+            try { renderSummaryChart(debounced); } catch (e) { /* ignore if chart not present */ }
         })
         .catch(error => {
             console.error('There has been a problem with your fetch operation:', error);
@@ -509,4 +511,62 @@ function colorToStatus(color) {
     if (c === 'yellow') return 'attention';
     if (c === 'green') return 'normal';
     return 'unknown';
+}
+
+// Chart instance for the index summary pie
+let summaryChart = null;
+
+function renderSummaryChart(hooks) {
+    if (!Array.isArray(hooks)) return;
+
+    // compute counts
+    let critical = 0, attention = 0, normal = 0, unknown = 0;
+    hooks.forEach(h => {
+        const col = getHookColor(h);
+        const stat = colorToStatus(col);
+        if (stat === 'critical') critical++;
+        else if (stat === 'attention') attention++;
+        else if (stat === 'normal') normal++;
+        else unknown++;
+    });
+
+    const total = critical + attention + normal + unknown || 1;
+    const data = [critical, attention, normal, unknown];
+
+    const ctxEl = document.getElementById('status-pie');
+    if (!ctxEl) return; // only render on pages that have the canvas
+
+    const labels = ['Critical', 'Attention', 'Normal', 'N/A'];
+    const bg = ['#d9534f', '#f0ad4e', '#2ecc71', '#888'];
+
+    if (!summaryChart) {
+        // create chart
+        try {
+            summaryChart = new Chart(ctxEl.getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{ data: data, backgroundColor: bg }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: { callbacks: { label: function(tooltipItem) {
+                            const v = tooltipItem.dataset.data[tooltipItem.dataIndex] || 0;
+                            const pct = ((v / total) * 100).toFixed(1);
+                            return `${tooltipItem.label}: ${v} (${pct}%)`;
+                        } } }
+                    }
+                }
+            });
+        } catch (e) {
+            console.warn('Chart creation failed', e);
+            return;
+        }
+    } else {
+        summaryChart.data.datasets[0].data = data;
+        summaryChart.update();
+    }
 }

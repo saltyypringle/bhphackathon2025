@@ -137,25 +137,47 @@ h1 {
     .main-content, .content { margin-left: 0; margin-right: 0; padding: 14px; height: auto; overflow: visible; }
 }
 
-/* Desktop behavior: fit layout inside viewport, main-content scrolls internally */
+/* Desktop behavior: fit layout inside viewport, allow the page to use full vertical space */
 @media (min-width: 900px) {
-    /* prevent the page itself from scrolling on standard desktop screens */
-    body { overflow: hidden; }
+    /* allow the page itself to scroll so content can expand naturally */
+    body { overflow: auto; }
 
-    /* Adjust rail sizes so main content has more horizontal room */
-    .nav-rail { width: 200px; padding: 24px 12px; }
-    .sidebar { width: 300px; padding: 20px; }
-
-    /* Main content fills the remaining viewport width and scrolls internally */
-    .main-content, .content {
-        width: calc(100vw - 200px - 300px);
-        margin-left: 200px;
-        margin-right: 300px;
-        height: 100vh;
+    /* Slightly narrower rails so main content gets more room */
+    .nav-rail {
+        width: 180px;
+        padding: 20px 12px;
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
         overflow: auto;
+        box-sizing: border-box;
+    }
+
+    .sidebar {
+        width: 260px;
+        padding: 20px;
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        overflow: auto;
+        box-sizing: border-box;
+    }
+
+    /* Main content fills remaining horizontal space, with comfortable padding
+       and natural vertical flow (no forced 100vh internal scrolling). */
+    .main-content, .content {
+        width: calc(100vw - 180px - 260px);
+        margin-left: 180px;
+        margin-right: 260px;
         padding: 36px;
         box-sizing: border-box;
         max-width: none;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
 
     /* Bigger, denser berth grid on wide screens */
@@ -163,6 +185,12 @@ h1 {
     .bollard { padding: 12px; }
     .hook-item { padding: 6px 0; font-size: 1rem; }
     .status-dot { width: 14px; height: 14px; margin-right: 10px; }
+
+    /* Center chart card inside main content and allow it to expand nicely */
+    .chart-card { margin-left: 0; margin-right: 0; }
+    @media (min-width: 1100px) {
+        .chart-card { max-width: 900px; margin: 0 auto; }
+    }
 }
 
 .no-rails .main-content,
@@ -286,4 +314,14 @@ h1 {
     font-size: 0.95em;
 }
 .home-link:hover { background: rgba(227,83,2,0.12); transform: translateX(-2px); }
+
+/* Small card for the summary pie chart on the index page */
+.chart-card { background: var(--card-bg); border-radius: 10px; padding: 16px; margin-top: 18px; box-shadow: var(--shadow-1); border: 1px solid var(--soft-border); width: 100%; max-width: none; box-sizing: border-box; }
+.chart-card h2 { margin: 0 0 12px 0; font-size: 18px; }
+.chart-card canvas { width: 100% !important; height: 320px !important; display: block; }
+
+/* Wider layout on large screens: limit to a comfortable max and center */
+@media (min-width: 1100px) {
+    .chart-card { max-width: 720px; margin-left: 0; }
+}
 
