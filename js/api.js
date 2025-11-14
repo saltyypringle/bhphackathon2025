@@ -46,23 +46,57 @@ function updateSidebar(hooks) {
         return;
     }
 
+    // Build a list of hooks whose computed color is red, compute a numeric
+    // tension value (measured or estimated), sort descending, then render.
+    const redList = [];
     hooks.forEach(item => {
+        try {
+            const c = normalizeColorName(getHookColor(item));
+            if (c !== 'red') return;
+
+            const rawT = (item.tension === null || item.tension === undefined || isNaN(Number(item.tension))) ? null : Number(item.tension);
+            const providedMax = (item.max_tension === undefined || item.max_tension === null || isNaN(Number(item.max_tension))) ? null : Number(item.max_tension);
+            // Estimate numeric tension for sorting: prefer rawT, otherwise estimate from percent using same default (100)
+            let numeric = 0;
+            if (rawT !== null) {
+                numeric = rawT;
+            } else if (item.percent !== null && item.percent !== undefined && !isNaN(Number(item.percent))) {
+                const pct = Number(item.percent);
+                const maxT = (providedMax === null) ? 100 : providedMax;
+                numeric = (pct / 100) * maxT;
+            }
+
+            redList.push({ item, rawT, providedMax, numeric });
+        } catch (e) {
+            // skip items that error during color computation
+        }
+    });
+
+    // sort by numeric tension descending
+    redList.sort((a, b) => (b.numeric || 0) - (a.numeric || 0));
+
+    // render sorted red items
+    redList.forEach(({ item, rawT, providedMax }) => {
         const tensionInfo = document.createElement('div');
         tensionInfo.className = 'tension-info';
-        if (item.high_tension > 0) {
-            const percent = item.percent !== null && item.percent !== undefined ? `${item.percent}%` : 'N/A';
-            const lastTs = (item.history && item.history.length) ? item.history[item.history.length - 1].timestamp : '';
-            tensionInfo.innerHTML = `
-                    <h4>${item.hook_name} <small>(${item.bollard_name})</small></h4>
-                    <p>Port: ${item.port_name} — Berth: ${item.berth_name}</p>
-                    <p>Tension: ${item.tension !== null ? item.tension : 'N/A'} / ${item.max_tension} (${percent})</p>
-                    <p>Status: ${item.faulted ? 'Faulted' : 'Normal'} ${item.attached_line ? '— ' + item.attached_line : ''}</p>
-                    <p>Rate: ${item.rate}</p>
-
-                    ${lastTs ? `<p class="small">Last: ${lastTs}</p>` : ''}
-                `;
-            container.appendChild(tensionInfo);
+        let displayMax = providedMax;
+        if (rawT !== null) {
+            if (displayMax === null || displayMax < rawT) displayMax = 100;
+        } else {
+            if (displayMax === null) displayMax = 100;
         }
+        const percent = (rawT !== null && displayMax > 0) ? `${Math.round((rawT / displayMax) * 100)}%` : (item.percent !== null && item.percent !== undefined ? `${item.percent}%` : 'N/A');
+        const lastTs = (item.history && item.history.length) ? item.history[item.history.length - 1].timestamp : '';
+        tensionInfo.innerHTML = `
+                <h4>${item.hook_name} <small>(${item.bollard_name})</small></h4>
+                <p>Port: ${item.port_name} — Berth: ${item.berth_name}</p>
+                <p>Tension: ${rawT !== null ? rawT : 'N/A'} / ${displayMax} (${percent})</p>
+                <p>Status: ${item.faulted ? 'Faulted' : 'Normal'} ${item.attached_line ? '— ' + item.attached_line : ''}</p>
+                <p>Rate: ${item.rate}</p>
+
+                ${lastTs ? `<p class="small">Last: ${lastTs}</p>` : ''}
+            `;
+        container.appendChild(tensionInfo);
     });
 }
 
@@ -80,32 +114,23 @@ function groupByBerth(hooks) {
 
 function tensionColor(tension, maxTension) {
     if (tension === null || tension === undefined || isNaN(Number(tension))) return 'gray';
-    if (maxTension !== undefined && maxTension !== null && !isNaN(Number(maxTension))) {
-        const t = Number(tension);
-        const maxT = Number(maxTension) || 10;
-        const pct = (maxT > 0) ? (t / maxT) * 100 : 0;
-        if (pct >= 80) return 'red';
-        if (pct >= 50) return 'yellow';
-        return 'green';
-    }
-    return tensionLevelColor(tension);
+    // Interpret the provided tension value as an absolute value and map to thresholds
+    return tensionLevelColor(Number(tension));
 }
 
 function tensionLevelColor(tension) {
-    // Map absolute tension levels to colors:
-    // 0-2 : yellow
-    // 2-4 : green
-    // 4-6 : yellow
-    // 6-9 : red
-    // N/A  : grey
+    // Map absolute tension levels to colors per new requested ranges:
+    // - under 5         : attention (yellow)
+    // - 5 to 25 (inc.)  : normal (green)
+    // - above 25 to 50   : attention (yellow)
+    // - above 50        : critical (red)
+    // N/A                : grey
     if (tension === null || tension === undefined || isNaN(Number(tension))) return 'gray';
     const t = Number(tension);
-    if (t >= 6 && t < 9) return 'red';
-    if (t >= 4 && t < 6) return 'yellow';
-    if (t >= 2 && t < 4) return 'green';
-    if (t >= 0 && t < 2) return 'yellow';
-    // Anything >=9 treat as red (very high tension)
-    if (t >= 9) return 'red';
+    if (t > 55) return 'red';
+    if (t > 25 && t <= 50) return 'yellow';
+    if (t >= 5 && t <= 25) return 'green';
+    if (t >= 0 && t < 5) return 'yellow';
     return 'gray';
 
 }
@@ -487,7 +512,7 @@ function getHookColor(h) {
     // Otherwise try percent-based estimate
     if (hasP) {
         const p = Number(h.percent);
-        const maxT = (h.max_tension === undefined || h.max_tension === null || isNaN(Number(h.max_tension))) ? null : Number(h.max_tension);
+            const maxT = (h.max_tension === undefined || h.max_tension === null || isNaN(Number(h.max_tension))) ? 100 : Number(h.max_tension);
         if (maxT !== null) {
             const estT = (p / 100) * maxT;
             return tensionLevelColor(estT);
