@@ -260,10 +260,27 @@ class HookWorker:
 
     @property
     def data(self) -> HookData:
+        # Ensure tension passed to the model respects the declared validation
+        # bounds (models.py) — clamp if necessary to avoid Pydantic validation errors
+        # when generated values exceed expected limits.
+        display_tension = None
+        if self.tension is not None:
+            # clamp to [0, 999] matching the HookData lt=1000 rule
+            try:
+                t = int(self.tension)
+            except Exception:
+                t = None
+            if t is not None:
+                if t < 0:
+                    t = 0
+                if t >= 1000:
+                    t = 999
+                display_tension = t
+
         # noinspection PyTypeChecker
         return HookData(
             name=self.name,
-            tension=self.tension,
+            tension=display_tension,
             faulted=self.fault,
             attached_line=self.attached_line,
         )
