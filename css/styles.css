@@ -225,6 +225,8 @@ h1 {
 .status-dot.yellow { background: #f0ad4e; }
 .status-dot.red { background: #d9534f; }
 .status-dot.gray { background: #888; }
+/* alias with British spelling */
+.status-dot.grey { background: #888; }
 
 /* subtle pulsing for attention/critical to draw focus */
 @keyframes pulse-critical {

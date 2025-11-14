@@ -77,15 +77,49 @@ function groupByBerth(hooks) {
 }
 
 function tensionColor(tension, maxTension) {
-    // Percent-based coloring using server thresholds:
-    // critical: >=80%; attention: >=50%; else normal
+    // Deprecated: replaced by tensionLevelColor which maps absolute tension
+    // levels to colors. Keep for backwards compatibility but route to
+    // the new mapping by estimating an absolute tension if maxTension
+    // is provided. If not, fall back to grey.
+    if (tension === null || tension === undefined || isNaN(Number(tension))) return 'gray';
+    // If maxTension provided, we can compute percent mapping via original
+    // behavior; otherwise map directly using absolute levels.
+    if (maxTension !== undefined && maxTension !== null && !isNaN(Number(maxTension))) {
+        const t = Number(tension);
+        const maxT = Number(maxTension) || 10;
+        const pct = (maxT > 0) ? (t / maxT) * 100 : 0;
+        if (pct >= 80) return 'red';
+        if (pct >= 50) return 'yellow';
+        return 'green';
+    }
+    return tensionLevelColor(tension);
+}
+
+function tensionLevelColor(tension) {
+    // Map absolute tension levels to colors:
+    // 0-2 : yellow
+    // 2-4 : green
+    // 4-6 : yellow
+    // 6-9 : red
+    // N/A  : gray
     if (tension === null || tension === undefined || isNaN(Number(tension))) return 'gray';
     const t = Number(tension);
-    const maxT = (maxTension === undefined || maxTension === null) ? 10 : Number(maxTension);
-    const pct = (maxT > 0) ? (t / maxT) * 100 : 0;
-    if (pct >= 80) return 'red';
-    if (pct >= 50) return 'yellow';
-    return 'green';
+    if (t >= 6 && t < 9) return 'red';
+    if (t >= 4 && t < 6) return 'yellow';
+    if (t >= 2 && t < 4) return 'green';
+    if (t >= 0 && t < 2) return 'yellow';
+    // Anything >=9 treat as red (very high tension)
+    if (t >= 9) return 'red';
+    return 'gray';
+
+}
+
+function normalizeColorName(c) {
+    if (!c || typeof c !== 'string') return 'gray';
+    const s = c.trim().toLowerCase();
+    if (s === 'grey') return 'gray';
+    if (s === 'red' || s === 'yellow' || s === 'green' || s === 'gray') return s;
+    return 'gray';
 }
 
 function makeToggle(iconEl, bodyEl) {
@@ -237,15 +271,17 @@ function renderBerth(container, bollardsObj, berthName) {
     const header = document.createElement('h2');
     header.textContent = berthName;
 
-    // compute summary counts (use debounced_status when available)
+    // compute summary counts using the same color logic we render with
     let critical = 0, attention = 0, normal = 0, total = 0;
     Object.values(bollardsObj).forEach(hooks => {
         hooks.forEach(h => {
             total++;
-            const st = h.debounced_status || h.status;
-            if (st === 'critical') critical++;
-            else if (st === 'attention') attention++;
-            else normal++;
+            const col = getHookColor(h);
+            const s = colorToStatus(col);
+            if (s === 'critical') critical++;
+            else if (s === 'attention') attention++;
+            else if (s === 'normal') normal++;
+            // unknown -> don't increment normal
         });
     });
 
@@ -289,23 +325,16 @@ function renderBerth(container, bollardsObj, berthName) {
         hooks.forEach(h => {
             const hookEl = document.createElement('div');
             hookEl.className = 'hook-item';
-            // prefer server status color, fall back to percent/tension ranges
+            // prefer server status color; prefer absolute tension when available,
+            // fall back to estimating via percent+max_tension, then percent thresholds, then grey.
             let color;
-            const st = h.debounced_status || h.status;
-            if (st) {
-                color = statusColor(st);
-            } else if (h.percent !== null && h.percent !== undefined) {
-                const p = Number(h.percent);
-                if (!isNaN(p)) {
-                    color = (p >= 80) ? 'red' : (p >= 50) ? 'yellow' : 'green';
-                } else {
-                    color = tensionColor(h.tension, h.max_tension);
-                }
-            } else {
-                color = tensionColor(h.tension, h.max_tension);
-            }
+            // Use centralized helper so rendering matches summary counts and
+            // N/A (no tension & no percent) is forced to gray even if server status exists.
+            color = getHookColor(h);
             const dot = document.createElement('span');
-            dot.className = 'status-dot ' + color;
+            const norm = normalizeColorName(color);
+            dot.classList.add('status-dot', norm);
+            if (norm === 'gray') dot.classList.add('grey');
             const txt = document.createElement('span');
             txt.className = 'hook-text';
             const last = h.last_timestamp ? ` (last: ${h.last_timestamp})` : '';
@@ -430,4 +459,42 @@ function applyDebounceToHooks(hooks) {
         // attach debounced status to a shallow copy so we don't mutate upstream data
         return Object.assign({}, h, { debounced_status: statusBuffers[key].stable });
     });
+}
+
+function getHookColor(h) {
+    // If neither a valid tension nor percent is available, treat as N/A -> gray
+    const hasT = !(h.tension === null || h.tension === undefined || isNaN(Number(h.tension)));
+    const hasP = !(h.percent === null || h.percent === undefined || isNaN(Number(h.percent)));
+    if (!hasT && !hasP) return 'gray';
+
+    // Prefer absolute tension when present
+    if (hasT) return tensionLevelColor(Number(h.tension));
+
+    // Otherwise try percent-based estimate
+    if (hasP) {
+        const p = Number(h.percent);
+        const maxT = (h.max_tension === undefined || h.max_tension === null || isNaN(Number(h.max_tension))) ? null : Number(h.max_tension);
+        if (maxT !== null) {
+            const estT = (p / 100) * maxT;
+            return tensionLevelColor(estT);
+        }
+        // No max_tension: fall back to percent thresholds
+        if (p >= 80) return 'red';
+        if (p >= 50) return 'yellow';
+        return 'green';
+    }
+
+    // Last resort: server-provided status
+    const st = h.debounced_status || h.status;
+    if (st) return statusColor(st);
+
+    return 'gray';
+}
+
+function colorToStatus(color) {
+    const c = (color || '').toLowerCase();
+    if (c === 'red') return 'critical';
+    if (c === 'yellow') return 'attention';
+    if (c === 'green') return 'normal';
+    return 'unknown';
 }
