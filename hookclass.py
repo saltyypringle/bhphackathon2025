@@ -26,7 +26,7 @@ class Hook:
 
         if self.high_tension > 0:
             self.high_tension -= 1
-        if tension is not None and tension >= 9:
+        if tension is not None and tension >= 35:
             self.high_tension = 5
 
     def tension_percent(self):

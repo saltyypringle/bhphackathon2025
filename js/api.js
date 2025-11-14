@@ -80,32 +80,23 @@ function groupByBerth(hooks) {
 
 function tensionColor(tension, maxTension) {
     if (tension === null || tension === undefined || isNaN(Number(tension))) return 'gray';
-    if (maxTension !== undefined && maxTension !== null && !isNaN(Number(maxTension))) {
-        const t = Number(tension);
-        const maxT = Number(maxTension) || 10;
-        const pct = (maxT > 0) ? (t / maxT) * 100 : 0;
-        if (pct >= 80) return 'red';
-        if (pct >= 50) return 'yellow';
-        return 'green';
-    }
-    return tensionLevelColor(tension);
+    // Interpret the provided tension value as an absolute value and map to thresholds
+    return tensionLevelColor(Number(tension));
 }
 
 function tensionLevelColor(tension) {
-    // Map absolute tension levels to colors:
-    // 0-2 : yellow
-    // 2-4 : green
-    // 4-6 : yellow
-    // 6-9 : red
-    // N/A  : grey
+    // Map absolute tension levels to colors per new requested ranges:
+    // - under 5         : attention (yellow)
+    // - 5 to 25 (inc.)  : normal (green)
+    // - above 25 to 50   : attention (yellow)
+    // - above 50        : critical (red)
+    // N/A                : grey
     if (tension === null || tension === undefined || isNaN(Number(tension))) return 'gray';
     const t = Number(tension);
-    if (t >= 6 && t < 9) return 'red';
-    if (t >= 4 && t < 6) return 'yellow';
-    if (t >= 2 && t < 4) return 'green';
-    if (t >= 0 && t < 2) return 'yellow';
-    // Anything >=9 treat as red (very high tension)
-    if (t >= 9) return 'red';
+    if (t > 50) return 'red';
+    if (t > 25 && t <= 50) return 'yellow';
+    if (t >= 5 && t <= 25) return 'green';
+    if (t >= 0 && t < 5) return 'yellow';
     return 'gray';
 
 }
