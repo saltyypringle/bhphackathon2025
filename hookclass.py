@@ -2,7 +2,7 @@ from datetime import datetime
 
 
 class Hook:
-    def __init__(self, name, bollard_name, berth_name, port_name, max_tension=10):
+    def __init__(self, name, bollard_name, berth_name, port_name, max_tension=50):
         self.name = name
         self.bollard_name = bollard_name
         self.berth_name = berth_name
@@ -26,7 +26,7 @@ class Hook:
 
         if self.high_tension > 0:
             self.high_tension -= 1
-        if tension is not None and tension >= 9:
+        if tension is not None and tension >= 45:
             self.high_tension = 5
 
     def tension_percent(self):

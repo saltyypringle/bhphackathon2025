@@ -46,7 +46,37 @@ function updateSidebar(hooks) {
         return;
     }
 
+    // Build a list of hooks whose computed color is red, compute a numeric
+    // tension value (measured or estimated), sort descending, then render.
+    const redList = [];
     hooks.forEach(item => {
+        try {
+            const c = normalizeColorName(getHookColor(item));
+            if (c !== 'red') return;
+
+            const rawT = (item.tension === null || item.tension === undefined || isNaN(Number(item.tension))) ? null : Number(item.tension);
+            const providedMax = (item.max_tension === undefined || item.max_tension === null || isNaN(Number(item.max_tension))) ? null : Number(item.max_tension);
+            // Estimate numeric tension for sorting: prefer rawT, otherwise estimate from percent using same default (100)
+            let numeric = 0;
+            if (rawT !== null) {
+                numeric = rawT;
+            } else if (item.percent !== null && item.percent !== undefined && !isNaN(Number(item.percent))) {
+                const pct = Number(item.percent);
+                const maxT = (providedMax === null) ? 100 : providedMax;
+                numeric = (pct / 100) * maxT;
+            }
+
+            redList.push({ item, rawT, providedMax, numeric });
+        } catch (e) {
+            // skip items that error during color computation
+        }
+    });
+
+    // sort by numeric tension descending
+    redList.sort((a, b) => (b.numeric || 0) - (a.numeric || 0));
+
+    // render sorted red items
+    redList.forEach(({ item, rawT, providedMax }) => {
         const tensionInfo = document.createElement('div');
         tensionInfo.className = 'tension-info';
         if (item.high_tension > 0) {
