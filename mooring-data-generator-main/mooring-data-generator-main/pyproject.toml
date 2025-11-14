@@ -1,0 +1,85 @@
+[project]
+name = "mooring-data-generator"
+version = "1.1.0"
+description = "Random-data generator to simulate fictional port data flows for use at a Hackathon"
+authors = [
+  {name = "Ben Fitzhardinge", email = "ben@benjamin.dog"},
+]
+maintainers = [
+  {name = "Ben Fitzhardinge", email = "ben@benjamin.dog"}
+]
+classifiers = [
+  # How mature is this project? Common values are
+  #   3 - Alpha
+  #   4 - Beta
+  #   5 - Production/Stable
+  "Development Status :: 4 - Beta",
+  # Indicate who your project is intended for
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Testing :: Traffic Generation",
+  # Specify the Python versions you support here.
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.8",
+]
+
+[project.scripts]
+mooring-data-generator = "mooring_data_generator.cli:main"
+mooring-data-receiver = "mooring_data_generator.receiver:cli"
+
+[project.urls]
+Homepage = "https://github.com/bendog/mooring-data-generator"
+Repository = "https://github.com/bendog/mooring-data-generator"
+Issues = "https://github.com/bendog/mooring-data-generator/issues"
+Changelog = "https://github.com/bendog/mooring-data-generator/releases"
+
+[dependency-groups]
+dev = [
+    "pytest~=8.4",
+]
+test = [
+    "ruff>=0.14.4",
+    "tox~=4.32",
+    "tox-uv>=1.20.0",
+]
+build = [
+    "uv-build~=0.9",
+]
+
+# UV Build tooling
+[build-system]
+requires = ["uv_build>=0.9"]
+build-backend = "uv_build"
+
+# RUFF settings
+[tool.ruff]
+target-version = "py313"
+line-length = 99
+
+[tool.ruff.lint]
+select = [
+    "C",  # mccabe rules
+    "F",  # pyflakes rules
+    "E",  # pycodestyle error rules
+    "W",  # pycodestyle warning rules
+    "B",  # flake8-bugbear rules
+    "I",  # isort rules
+]
+ignore = [
+    # "C901",  # max-complexity-10
+    "E501",  # line-too-long
+]
+
+# Rumdl settings
+# This is a tool for formatting markdown files, it can be used to fix issues automatically.
+[tool.rumdl]
+line-length = 100

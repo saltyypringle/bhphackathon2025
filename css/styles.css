@@ -3,10 +3,24 @@ body {
     margin: 0;
     padding: 0;
     background-color: #f4f4f4;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    background-image: linear-gradient(180deg, rgba(13,37,63,0.01), rgba(255,255,255,0.02));
+}
+
+:root{
+    --accent: #E35302; /* BHP orange */
+    --muted-text: #4a4f52;
+    --muted: #f6f8fa;
+    --card-bg: #ffffff;
+    --rail-bg: #ffffff;
+    --card-contrast: rgba(227,83,2,0.06);
+    --soft-border: rgba(14,30,37,0.06);
+    --shadow-1: 0 1px 6px rgba(16,24,32,0.06);
 }
 
 header {
-    background: #35424a;
+    background: var(--accent);
     color: #ffffff;
     padding: 10px 0;
     text-align: center;
@@ -16,17 +30,36 @@ h1 {
     margin: 0;
 }
 
+.main-content > h1 {
+    color: var(--accent);
+    font-size: 38px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+/* Berth page title and generated berth header: use brand accent color */
+#berth-title,
+#berth-data > h2 {
+    color: var(--accent);
+    font-weight: 700;
+}
+
 .container {
     display: flex;
+    align-items: flex-start;
 }
 
 .sidebar {
-    width: 250px;
-    background: #35424a;
-    color: #ffffff;
-    padding: 15px;
-    height: 100vh;
-    position: fixed;
+    /* Right-side rail for high-tension info; becomes fixed on wide screens */
+    flex: 0 0 300px;
+    width: 300px;
+    background: linear-gradient(180deg,#ffffff,#ffffff);
+    color: #111;
+    padding: 20px 16px;
+    position: relative;
+    height: auto;
+    overflow: visible;
+    z-index: 5;
 }
 
 .sidebar h2 {
@@ -43,14 +76,151 @@ h1 {
 }
 
 .main-content {
-    margin-left: 270px;
-    padding: 20px;
-    flex-grow: 1;
+    /* Leave space for fixed left nav (220px) and right rail (300px) */
+    margin-left: 240px;
+    margin-right: 320px;
+    padding: 24px;
+    flex: 1 1 auto;
+}
+
+/* Navigation rail on the left for berth links */
+.nav-rail {
+    /* Left nav rail; becomes fixed on wide screens */
+    position: relative;
+    left: auto;
+    top: auto;
+    bottom: auto;
+    width: 100%;
+    background: var(--rail-bg);
+    padding: 14px;
+    border-right: 1px solid var(--soft-border);
+    height: auto;
+    overflow: visible;
+    z-index: 10;
+}
+.nav-rail h2 { margin: 0 0 8px 0; font-size: 16px; color: var(--accent); }
+
+/* When nav and sidebar are fixed, the flex order is less relevant, but keep reasonable defaults */
+.nav-rail { order: 1; }
+.main-content { order: 2; }
+.sidebar { order: 3; }
+
+/* Pages use `.content` (berth pages). Ensure same spacing so content isn't hidden */
+.content {
+    /* Match main-content spacing so berth pages sit between rails */
+    margin-left: 240px;
+    margin-right: 320px;
+    padding: 16px 20px;
+    flex: 1 1 auto;
+}
+
+/* Ensure container extends to full viewport */
+.container { min-height: 100vh; }
+
+.container { gap: 12px; }
+
+/* Responsive: collapse sidebar into a top bar on narrow viewports */
+@media (max-width: 700px) {
+    .container {
+        flex-direction: column;
+    }
+    .sidebar {
+        position: relative;
+        width: 100%;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        height: auto;
+    }
+    .sidebar h2 { font-size: 16px; margin: 0; }
+    .main-content, .content {
+        margin-left: 0;
+        margin-right: 0;
+        padding: 12px;
+    }
+    .nav-rail { position: relative; width: 100%; border-right: none; border-bottom: 1px solid #e6e6e6; height: auto; }
+}
+
+/* Medium screens: ensure rails are in-flow so main content uses full width without overlap */
+@media (max-width: 899px) {
+    body { overflow: auto; }
+    .nav-rail { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 1px solid #e6e6e6; }
+    .sidebar { position: relative; width: 100%; height: auto; right: auto; }
+    .main-content, .content { margin-left: 0; margin-right: 0; padding: 14px; height: auto; overflow: visible; }
+}
+
+/* Desktop behavior: fit layout inside viewport, allow the page to use full vertical space */
+@media (min-width: 900px) {
+    /* allow the page itself to scroll so content can expand naturally */
+    body { overflow: auto; }
+
+    /* Slightly narrower rails so main content gets more room */
+    .nav-rail {
+        width: 180px;
+        padding: 20px 12px;
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        overflow: auto;
+        box-sizing: border-box;
+    }
+
+    .sidebar {
+        width: 260px;
+        padding: 20px;
+        position: fixed;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        overflow: auto;
+        box-sizing: border-box;
+    }
+
+    /* Main content fills remaining horizontal space, with comfortable padding
+       and natural vertical flow (no forced 100vh internal scrolling). */
+    .main-content, .content {
+        width: calc(100vw - 180px - 260px);
+        margin-left: 180px;
+        margin-right: 260px;
+        padding: 36px;
+        box-sizing: border-box;
+        max-width: none;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Bigger, denser berth grid on wide screens */
+    .berth-tree { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .bollard { padding: 12px; }
+    .hook-item { padding: 6px 0; font-size: 1rem; }
+    .status-dot { width: 14px; height: 14px; margin-right: 10px; }
+
+    /* Center chart card inside main content and allow it to expand nicely */
+    .chart-card { margin-left: 0; margin-right: 0; }
+    @media (min-width: 1100px) {
+        .chart-card { max-width: 900px; margin: 0 auto; }
+    }
+}
+
+.no-rails .main-content,
+.no-rails .content {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100vw !important;
+    padding: 32px !important;
+    box-sizing: border-box;
+    height: 100vh;
+    overflow: auto;
 }
 
 .button {
     display: inline-block;
-    background: #5cb85c;
+    background: var(--accent);
     color: white;
     padding: 10px 20px;
     text-decoration: none;
@@ -59,15 +229,113 @@ h1 {
 }
 
 .button:hover {
-    background: #4cae4c;
+    background: #c44700;
 }
 
 .footer {
     text-align: center;
     padding: 10px;
-    background: #35424a;
+    background: var(--accent);
     color: #ffffff;
     position: relative;
     bottom: 0;
     width: 100%;
 }
+
+.berth-tree { margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; align-items: start; }
+.bollard { background: var(--card-bg); border-radius: 10px; margin: 0; padding: 10px; box-shadow: var(--shadow-1); border: 1px solid var(--soft-border); transition: transform .12s ease, box-shadow .12s ease; }
+.bollard:hover { transform: translateY(-4px); box-shadow: 0 6px 20px rgba(16,24,32,0.08); }
+.bollard-header { display:flex; justify-content:space-between; align-items:center; padding:6px 4px; }
+.bollard-header:hover { background:#f6f6f6; }
+.hook-list { padding-left: 8px; margin-top:6px; }
+.hook-list.collapsed { display:none; }
+.hook-item { display:flex; align-items:center; padding:3px 0; font-size:0.92em; transition: background .12s ease, transform .08s ease; border-radius:6px; }
+.hook-item:hover { background: rgba(227,83,2,0.03); transform: translateY(-1px); }
+.hook-item:hover { background: rgba(227,83,2,0.03); transform: translateY(-1px); }
+.status-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 10px;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.06) inset;
+    vertical-align: middle;
+    transition: background-color .18s ease, transform .12s ease;
+}
+.status-dot.green { background: #2ecc71; }
+.status-dot.yellow { background: #f0ad4e; }
+.status-dot.red { background: #d9534f; }
+.status-dot.gray { background: #888; }
+/* alias with British spelling */
+.status-dot.grey { background: #888; }
+
+/* subtle pulsing for attention/critical to draw focus */
+@keyframes pulse-critical {
+    0% { box-shadow: 0 0 0 0 rgba(217,83,79,0.10); transform: scale(1); }
+    50% { box-shadow: 0 0 22px 12px rgba(217,83,79,0.18); transform: scale(1.12); }
+    100% { box-shadow: 0 0 0 0 rgba(217,83,79,0.00); transform: scale(1); }
+}
+
+@keyframes pulse-attention {
+    0% { box-shadow: 0 0 0 0 rgba(240,173,78,0.08); transform: scale(1); }
+    50% { box-shadow: 0 0 18px 9px rgba(240,173,78,0.14); transform: scale(1.10); }
+    100% { box-shadow: 0 0 0 0 rgba(240,173,78,0.00); transform: scale(1); }
+}
+
+.status-dot.red { animation: pulse-critical 1.2s ease-in-out infinite; }
+.status-dot.yellow { animation: pulse-attention 1.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+    .status-dot.red, .status-dot.yellow { animation: none !important; }
+}
+.hook-text { font-size:0.95em; }
+
+/* Collapsible behavior (initially expanded) */
+.bollard .hook-list { transition: max-height 0.2s ease; }
+
+/* Summary banner */
+.summary-banner { display:flex; justify-content:space-between; align-items:center; padding:8px; border-radius:8px; margin-bottom:8px; background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(250,250,250,0.85)); border: 1px solid var(--card-contrast); }
+.summary-banner.has-critical { box-shadow: 0 6px 20px rgba(217,83,79,0.12); }
+.summary-banner .crit { color:#d9534f; font-weight:700; margin-right:8px; }
+.summary-banner .att { color:#f0ad4e; margin-right:8px; }
+.summary-banner .norm { color:#2ecc71; }
+
+.berth-summary { margin-bottom:12px; }
+
+.button-container { padding: 8px; }
+.berth-nav { width: 220px; max-height: 72vh; overflow: auto; border-right: 1px solid var(--soft-border); background: var(--rail-bg); }
+.berth-nav-list { list-style: none; margin: 0; padding: 6px; display: flex; flex-direction: column; gap: 6px; }
+.berth-nav-item { margin: 0; }
+.nav-link { display: block; padding: 8px 12px; color: #222; text-decoration: none; border-radius: 6px; border-left: 4px solid transparent; transition: background .12s ease, transform .08s ease; }
+.nav-link:hover { background: rgba(227,83,2,0.04); transform: translateX(2px); }
+.nav-link:focus, .nav-link.active { background: rgba(227,83,2,0.06); border-left-color: var(--accent); outline: none; }
+
+@media (max-width: 700px) {
+    .berth-nav { width: 100%; border-right: none; border-bottom: 1px solid #e6e6e6; }
+    .berth-nav-list { flex-direction: row; gap: 8px; padding: 8px; overflow-x: auto; }
+    .nav-link { white-space: nowrap; }
+}
+
+.home-link {
+    display: inline-block;
+    margin-bottom: 8px;
+    color: #222;
+    text-decoration: none;
+    background: rgba(227,83,2,0.06);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.95em;
+}
+.home-link:hover { background: rgba(227,83,2,0.12); transform: translateX(-2px); }
+
+/* Small card for the summary pie chart on the index page */
+.chart-card { background: var(--card-bg); border-radius: 10px; padding: 16px; margin-top: 18px; box-shadow: var(--shadow-1); border: 1px solid var(--soft-border); width: 100%; max-width: none; box-sizing: border-box; }
+.chart-card h2 { margin: 0 0 12px 0; font-size: 18px; }
+.chart-card canvas { width: 100% !important; height: 320px !important; display: block; }
+
+/* Wider layout on large screens: limit to a comfortable max and center */
+@media (min-width: 1100px) {
+    .chart-card { max-width: 720px; margin-left: 0; }
+}
+
